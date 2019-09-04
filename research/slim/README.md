@@ -533,6 +533,7 @@ image_preprocessing_fn = preprocessing_factory.get_preprocessing(
 
 See
 [Hardware Specifications](https://github.com/tensorflow/models/tree/master/research/inception#what-hardware-specification-are-these-hyper-parameters-targeted-for).
+
 ###############################################################
 Environment:
     Tensorflow 1.12.0 and Models 1.12.0
