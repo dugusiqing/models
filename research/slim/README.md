@@ -533,3 +533,18 @@ image_preprocessing_fn = preprocessing_factory.get_preprocessing(
 
 See
 [Hardware Specifications](https://github.com/tensorflow/models/tree/master/research/inception#what-hardware-specification-are-these-hyper-parameters-targeted-for).
+###############################################################
+Environment:
+    Tensorflow 1.12.0 and Models 1.12.0
+    Python 2.7 or Python 3.5
+Ubuntu16.04: add PYTHONPATH = $Your Work Directory/models ;$Your Work Directory/models/research;$Your Work Directory/models/research/slim
+Windows10:  add path = c:/models;c:/models/research;c:/models/research/slim
+
+
+1.add "slim/nets/attention_modul.py " to reimplement se_block please refer to https://arxiv.org/abs/1709.01507.
+2.modify "slim/nets/mobilenet/conv_block.py" ,add a param to expanded_conv function (attention_module=None).
+3.modify "slim/nets/mobilenet/mobilenet_v2.py",add V2_DEF_SE_1 and V2_DEF_SE_10 ，add mobilenet_v2_se_1 and mobilenet_v2_se_10
+4.modify "slim/nets/net_factory.py",add "networks_map" and "arg_scopes_map" of mobilenet_v2_se_1 and mobilenet_v2_se_10 to   ,and add "attention_module=None "to "get_network_fn" as a param.
+5.modify "slim/preprocessing/preprocessing_factory.py",add "preprocessing_fn_map "of mobilenet_v2_se_1 and mobilenet_v2_se_1 
+6.modify "slim/train_image_classifier.py",add "attention_module=None" to flags,and modify flags like these :train_dir，dataset_name，dataset_dir，model_name.
+###############################################################

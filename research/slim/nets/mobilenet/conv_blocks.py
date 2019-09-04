@@ -17,7 +17,9 @@ import contextlib
 import functools
 
 import tensorflow as tf
-
+#############################################
+from nets.attention_module import se_block
+#############################################
 slim = tf.contrib.slim
 
 
@@ -178,7 +180,8 @@ def expanded_conv(input_tensor,
                   endpoints=None,
                   use_explicit_padding=False,
                   padding='SAME',
-                  scope=None):
+                  scope=None,
+                  attention_module=None):
   """Depthwise Convolution Block with expansion.
 
   Builds a composite convolution that has the following structure
@@ -221,7 +224,7 @@ def expanded_conv(input_tensor,
       were used.
     padding: Padding type to use if `use_explicit_padding` is not set.
     scope: optional scope.
-
+    attention_module: flag of using se_block ,set "se_block" use
   Returns:
     Tensor of depth num_outputs
 
@@ -306,6 +309,9 @@ def expanded_conv(input_tensor,
       net = depthwise_func(net, activation_fn=None)
 
     if callable(residual):  # custom residual
+      if (attention_module == 'se_block'):
+        ###Add SE_block
+        net = se_block(net, 'se_block')
       net = residual(input_tensor=input_tensor, output_tensor=net)
     elif (residual and
           # stride check enforces that we don't add residuals when spatial
@@ -314,6 +320,9 @@ def expanded_conv(input_tensor,
           # Depth matches
           net.get_shape().as_list()[3] ==
           input_tensor.get_shape().as_list()[3]):
+      if (attention_module == 'se_block'):
+        ###Add SE_block
+        net = se_block(net, 'se_block')
       net += input_tensor
     return tf.identity(net, name='output')
 

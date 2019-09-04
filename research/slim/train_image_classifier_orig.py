@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string(
     'master', '', 'The address of the TensorFlow master to use.')
 
 tf.app.flags.DEFINE_string(
-    'train_dir', 'C:\model\se10',
+    'train_dir', '/tmp/tfmodel/',
     'Directory where checkpoints and event logs are written to.')
 
 tf.app.flags.DEFINE_integer('num_clones', 1,
@@ -176,13 +176,13 @@ tf.app.flags.DEFINE_float(
 #######################
 
 tf.app.flags.DEFINE_string(
-    'dataset_name', 'flowers', 'The name of the dataset to load.')
+    'dataset_name', 'imagenet', 'The name of the dataset to load.')
 
 tf.app.flags.DEFINE_string(
     'dataset_split_name', 'train', 'The name of the train/test split.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_dir', 'C:\data', 'The directory where the dataset files are stored.')
+    'dataset_dir', None, 'The directory where the dataset files are stored.')
 
 tf.app.flags.DEFINE_integer(
     'labels_offset', 0,
@@ -191,7 +191,7 @@ tf.app.flags.DEFINE_integer(
     'class for the ImageNet dataset.')
 
 tf.app.flags.DEFINE_string(
-    'model_name', 'mobilenet_v2_se_10', 'The name of the architecture to train.')
+    'model_name', 'inception_v3', 'The name of the architecture to train.')
 
 tf.app.flags.DEFINE_string(
     'preprocessing_name', None, 'The name of the preprocessing to use. If left '
@@ -227,17 +227,6 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_boolean(
     'ignore_missing_vars', False,
     'When restoring a checkpoint would ignore missing variables.')
-
-##########################
-# Attention Module Flags #
-##########################
-	
-tf.app.flags.DEFINE_string(
-    'attention_module', None,
-    'The name of attention module to use.')
-	
-	
-
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -402,19 +391,13 @@ def _get_variables_to_train():
     variables_to_train.extend(variables)
   return variables_to_train
 
-##########
-def stats_graph(graph):
-    flops = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.float_operation())
-    params = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.trainable_variables_parameter())
-    print('FLOPs: {};    Trainable params: {}'.format(flops.total_float_ops, params.total_parameters))
-##########
 
 def main(_):
   if not FLAGS.dataset_dir:
     raise ValueError('You must supply the dataset directory with --dataset_dir')
 
   tf.logging.set_verbosity(tf.logging.INFO)
-  with tf.Graph().as_default() as graph:
+  with tf.Graph().as_default():
     #######################
     # Config model_deploy #
     #######################
@@ -427,8 +410,8 @@ def main(_):
 
     # Create global_step
     with tf.device(deploy_config.variables_device()):
-      #global_step = slim.create_global_step()
-      global_step = tf.train.create_global_step()
+      global_step = slim.create_global_step()
+
     ######################
     # Select the dataset #
     ######################
@@ -437,13 +420,13 @@ def main(_):
 
     ######################
     # Select the network #
-    ###################
+    ######################
     network_fn = nets_factory.get_network_fn(
         FLAGS.model_name,
         num_classes=(dataset.num_classes - FLAGS.labels_offset),
         weight_decay=FLAGS.weight_decay,
-        is_training=True,
-        attention_module=FLAGS.attention_module)
+        is_training=True)
+
     #####################################
     # Select the preprocessing function #
     #####################################
@@ -601,7 +584,6 @@ def main(_):
         save_summaries_secs=FLAGS.save_summaries_secs,
         save_interval_secs=FLAGS.save_interval_secs,
         sync_optimizer=optimizer if FLAGS.sync_replicas else None)
-    
 
 
 if __name__ == '__main__':

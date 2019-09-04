@@ -79,6 +79,108 @@ V2_DEF = dict(
         op(slim.conv2d, stride=1, kernel_size=[1, 1], num_outputs=1280)
     ],
 )
+V2_DEF_SE_1 = dict(
+    defaults={
+        # Note: these parameters of batch norm affect the architecture
+        # that's why they are here and not in training_scope.
+        (slim.batch_norm,): {'center': True, 'scale': True},
+        (slim.conv2d, slim.fully_connected, slim.separable_conv2d): {
+            'normalizer_fn': slim.batch_norm, 'activation_fn': tf.nn.relu6
+        },
+        (ops.expanded_conv,): {
+            'expansion_size': expand_input(6),
+            'split_expansion': 1,
+            'normalizer_fn': slim.batch_norm,
+            'residual': True
+        },
+        (slim.conv2d, slim.separable_conv2d): {'padding': 'SAME'}
+    },
+    spec=[
+        #conv
+        op(slim.conv2d, stride=2, num_outputs=32, kernel_size=[3, 3]),
+        #expanded_conv  0
+        op(ops.expanded_conv,
+           expansion_size=expand_input(1, divisible_by=1),
+           num_outputs=16),
+        #expanded_conv1 0
+        op(ops.expanded_conv, stride=2, num_outputs=24),
+        #expanded_conv2 1
+        op(ops.expanded_conv, stride=1, num_outputs=24, attention_module="se_block"),
+        #expanded_conv3 0
+        op(ops.expanded_conv, stride=2, num_outputs=32),
+        #expanded_conv4 1
+        op(ops.expanded_conv, stride=1, num_outputs=32),
+        #expanded_conv5 1
+        op(ops.expanded_conv, stride=1, num_outputs=32),
+        #expanded_conv6 0
+        op(ops.expanded_conv, stride=2, num_outputs=64),
+        #expanded_conv7 1
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        #expanded_conv8 1
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        #expanded_conv9 1
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        #expanded_conv10  0
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        #expanded_conv11  1
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        #expanded_conv12  1
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        #expanded_conv13  0
+        op(ops.expanded_conv, stride=2, num_outputs=160),
+        #expanded_conv14  1
+        op(ops.expanded_conv, stride=1, num_outputs=160),
+        #expanded_conv15  1
+        op(ops.expanded_conv, stride=1, num_outputs=160),
+        #expanded_conv16  0
+        op(ops.expanded_conv, stride=1, num_outputs=320),
+        #conv_1 0
+        op(slim.conv2d, stride=1, kernel_size=[1, 1], num_outputs=1280)
+    ],
+)
+
+V2_DEF_SE_10 = dict(
+    defaults={
+        # Note: these parameters of batch norm affect the architecture
+        # that's why they are here and not in training_scope.
+        (slim.batch_norm,): {'center': True, 'scale': True},
+        (slim.conv2d, slim.fully_connected, slim.separable_conv2d): {
+            'normalizer_fn': slim.batch_norm, 'activation_fn': tf.nn.relu6
+        },
+        (ops.expanded_conv,): {
+            'expansion_size': expand_input(6),
+            'split_expansion': 1,
+            'normalizer_fn': slim.batch_norm,
+            'residual': True,
+            'attention_module': "se_block"
+        },
+        (slim.conv2d, slim.separable_conv2d): {'padding': 'SAME'}
+    },
+    spec=[
+        op(slim.conv2d, stride=2, num_outputs=32, kernel_size=[3, 3]),
+        op(ops.expanded_conv,
+           expansion_size=expand_input(1, divisible_by=1),
+           num_outputs=16),
+        op(ops.expanded_conv, stride=2, num_outputs=24),
+        op(ops.expanded_conv, stride=1, num_outputs=24),
+        op(ops.expanded_conv, stride=2, num_outputs=32),
+        op(ops.expanded_conv, stride=1, num_outputs=32),
+        op(ops.expanded_conv, stride=1, num_outputs=32),
+        op(ops.expanded_conv, stride=2, num_outputs=64),
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        op(ops.expanded_conv, stride=1, num_outputs=64),
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        op(ops.expanded_conv, stride=1, num_outputs=96),
+        op(ops.expanded_conv, stride=2, num_outputs=160),
+        op(ops.expanded_conv, stride=1, num_outputs=160),
+        op(ops.expanded_conv, stride=1, num_outputs=160),
+        op(ops.expanded_conv, stride=1, num_outputs=320),
+        op(slim.conv2d, stride=1, kernel_size=[1, 1], num_outputs=1280)
+    ],
+)
+
 # pyformat: enable
 
 
@@ -180,6 +282,8 @@ mobilenet_v2_050 = wrapped_partial(mobilenet, depth_multiplier=0.50,
 mobilenet_v2_035 = wrapped_partial(mobilenet, depth_multiplier=0.35,
                                    finegrain_classification_mode=True)
 
+mobilenet_v2_se_1 = wrapped_partial(mobilenet, conv_defs=V2_DEF_SE_1)
+mobilenet_v2_se_10 = wrapped_partial(mobilenet, conv_defs=V2_DEF_SE_10)
 
 @slim.add_arg_scope
 def mobilenet_base(input_tensor, depth_multiplier=1.0, **kwargs):
